@@ -16,7 +16,7 @@
 
 #endif
 
-
+/*
 //------ FOR JW ------//
 #ifdef __APPLE__
 #include <unistd.h>
@@ -29,7 +29,7 @@
 #define CASCADE_EYE "./cascade_xmls/haarcascade_eye.xml"
 
 #endif
-
+*/
 
 /*------ WINDOW_NAME ------ */
 #define GAME_IMG	"GAME"
@@ -110,8 +110,9 @@ public:
 	void initialize_members() { this->set_focus_point(cv::Point()); this->set_perspective_weight(0.); }
 
 	void detect_Eyes(cv::Mat& PLAYER_FOCUS, cv::Mat& GAME_FRAME, cv::Point* EYES_COORDINATE, std::queue<cv::Rect>& DETECTED_FACES_QUEUE, std::queue<cv::Rect>& DETECTED_LEFT_EYE_QUEUE, std::queue<cv::Rect>& DETECTED_RIGHT_EYE_QUEUE);
-	
+
 	void initial_setup(cv::Mat& PLAYER_FOCUS, cv::Mat& GAME_FRAME, cv::Point* EYES_COORDINATE, std::queue<cv::Rect>& DETECTED_FACES_QUEUE, std::queue<cv::Rect>& DETECTED_LEFT_EYE_QUEUE, std::queue<cv::Rect>& DETECTED_RIGHT_EYE_QUEUE);
+
 };
 
 
