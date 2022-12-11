@@ -1,6 +1,5 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <queue>
 #include "config.h"
 
 using namespace std;
@@ -54,9 +53,10 @@ T get_most_frequent_value(T* buffer) {
     for (j = 0; j < INITIALIZATION_FRAME_NUM; j++) {
         if (vals[j] > freqeuncy) {
             freqeuncy = vals[j];
-            result = keys[j];
         }
+        result = keys[j];
     }
+
     return result;
 }
 /************************************************************************************************************************/
@@ -176,9 +176,10 @@ void PLAYER::detect_Eyes(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORDIN
             faceErrorCount = 0;
         }
     }
-    
+
     // Detected FACE
     rectangle(PLAYER_FOCUS, face_ROI, EYE_COLOR, 2, LINE_AA);
+    
     /*----- SPLIT BOTH EYES ROI -----*/
     face_ROI_coordinate = Point(face_ROI.x, face_ROI.y);
     face_width = cvRound(face_ROI.width);
@@ -269,8 +270,8 @@ void PLAYER::detect_Eyes(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORDIN
     *(EYES_COORDINATE) = Point(left_eye_x, left_eye_y);     // LEFT EYE
     *(EYES_COORDINATE + 1) = Point(right_eye_x, right_eye_y); // RIGHT EYE
 
-    circle(PLAYER_FOCUS, *(EYES_COORDINATE), 3, Scalar(255, 0, 0), 1);
-    circle(PLAYER_FOCUS, *(EYES_COORDINATE + 1), 3, Scalar(255, 0, 0), 1);
+    circle(PLAYER_FOCUS, *(EYES_COORDINATE), 3, EYE_COLOR, 1, cv::FILLED);
+    circle(PLAYER_FOCUS, *(EYES_COORDINATE + 1), 3, EYE_COLOR, 1, cv::FILLED);
 
     /* CALCULATE AND UPDATE FOCUS POINT & PERSPECTIVE WEIGHT */
     this->set_focus_point(Point(((right_eye_x - left_eye_x) / 2) + left_eye_x,
@@ -295,14 +296,22 @@ void PLAYER::initial_setup(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORD
             for (int f = 0; f < INITIALIZATION_FRAME_NUM; f++) {        // INITIALIZATION_FRAME_NUM: 30 프레임 계산
                 cap >> PLAYER_FOCUS;
                 // 동공 검출 과정
+                cout << "QUEUE size: " << endl;
+                cout << "FACE QUEUE: " << DETECTED_FACES_QUEUE.size() << endl;
+                cout << "DETECTED LEFT QUEUE: " << DETECTED_LEFT_EYE_QUEUE.size() << endl;
+                cout << "DETECTED RIGHT QUEUE: " << DETECTED_RIGHT_EYE_QUEUE.size() << endl;
+
                 this->detect_Eyes(PLAYER_FOCUS, GAME_FRAME, EYES_COORDINATE, DETECTED_FACES_QUEUE, DETECTED_LEFT_EYE_QUEUE, DETECTED_RIGHT_EYE_QUEUE);
                 // 검출 결과 버퍼 저장
                 face_buf[f] = DETECTED_FACES_QUEUE.back();
+                cout << "face detected." << endl;
                 left_eye_buf[f] = DETECTED_LEFT_EYE_QUEUE.back();
+                cout << "left eye detected." << endl;
                 right_eye_buf[f] = DETECTED_RIGHT_EYE_QUEUE.back();
+                cout << "right eye detected." << endl;
                 focus_point_buf[f] = this->get_focus_point();
+                cout << "point buff made." << endl;
                 perspective_weight_buf[f] = this->get_perspective_weight();
-
                 // TODO: 추후 게임 화면에서 표시할 경우 수정 및 삭제 필요
                 putText(PLAYER_FOCUS, INIT_TEXT, Point(10, 30), 2, 1, Scalar(0, 0, 255));
                 circle(PLAYER_FOCUS, corner, 20, Scalar(0, 0, 255), -1, LINE_AA);
@@ -336,28 +345,23 @@ int main() {
     game.GAME_INIT();
 
     PLAYER player;
-    player.initial_setup(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
-    
-    /* 초기 설정 값 출력 */
-    cout << endl << BORDER_LINE << "[ INITIAL STATES ]" << endl;
-    cout << "Focus Points : ";
-    for (int i = 0; i < 8; i++) {
-        cout << player.get_initial_focus_points()[i] << "\t";
+    while (true) {
+        cap >> player_focus;
+        player.detect_Eyes(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
+
+        double pw = player.get_perspective_weight();
+        Point fp = player.get_focus_point();
+
+        // 초점 및 가중치 표현
+        circle(player_focus, fp, 3, Scalar(0, 0, 255), -1, LINE_AA);
+        String norm_val = to_string(player.get_perspective_weight());
+        putText(player_focus, norm_val, Point(10, 30), 2, 1, Scalar(0, 0, 255));
+
+        // cvtColor(player_focus, player_focus, COLOR_BGR2GRAY);
+        imshow("Player", player_focus);
+        if (waitKey(10) == 27) { break; }
     }
-    cout << endl << endl << "Perspective Weights : ";
-    for (int i = 0; i < 8; i++) {
-        cout << player.get_initial_perspective_weights()[i] << "\t";
-    }
-    cout << endl << endl << "Faces : ";
-    for (int i = 0; i < 8; i++) {
-        cout << player.get_initial_faces()[i] << "\t";
-    }
-    cout << endl << endl << "Left Eyes : ";
-    for (int i = 0; i < 8; i++) {
-        cout << player.get_initial_left_eyes()[i] << "\t";
-    }
-    cout << endl << endl << "Right Eyes : ";
-    for (int i = 0; i < 8; i++) {
-        cout << player.get_initial_right_eyes()[i] << "\t";
-    }
+
+    destroyAllWindows();
+
 }   
