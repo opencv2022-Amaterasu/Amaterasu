@@ -16,7 +16,7 @@
 
 #endif
 
-/*
+
 //------ FOR JW ------//
 #ifdef __APPLE__
 #include <unistd.h>
@@ -29,7 +29,7 @@
 #define CASCADE_EYE "./cascade_xmls/haarcascade_eye.xml"
 
 #endif
-*/
+
 
 /*------ WINDOW_NAME ------ */
 #define GAME_IMG	"GAME"
