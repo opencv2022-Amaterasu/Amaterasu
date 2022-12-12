@@ -14,7 +14,7 @@ VideoCapture cap;
 
 /*----- game -----*/
 Mat game_frame;
-
+Point focus_ex(0,0);
 
 /*----- player -----*/
 Mat player_focus(Size(DEFAULT_WIDTH, DEFAULT_HEIGHT), CV_8UC3);
@@ -289,7 +289,16 @@ void PLAYER::show_initial_setups(PLAYER* p) {
     cout << endl << endl << "Perspective Weights : ";
     for (int i = 0; i < 8; i++) {
         cout << p->get_initial_perspective_weights()[i] << "\t";
+        if (p->get_initial_perspective_weights()[i] > p->max_perspective_weight) {
+            p->max_perspective_weight = p->get_initial_perspective_weights()[i];
+        }
+        else if (p->get_initial_perspective_weights()[i] < p->min_perspective_weight) {
+            p->min_perspective_weight = p->get_initial_perspective_weights()[i];
+        }
     }
+    cout << endl << "min: " << p->min_perspective_weight << endl;
+    cout << "max: " << p->max_perspective_weight << endl;
+
     cout << endl << endl << "Faces : ";
     for (int i = 0; i < 8; i++) {
         cout << p->get_initial_faces()[i] << "\t";
@@ -356,6 +365,25 @@ void PLAYER::initial_setup(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORD
     }
 }
 
+
+cv::Point PLAYER::calulate_focus(PLAYER* p) {
+    double pw = p->get_perspective_weight();
+    Point fp = p->get_focus_point();
+
+    if (focus_ex.x == 0 && focus_ex.y == 0) {
+        focus_ex = CENTER_POINT;
+    }
+    
+    Point result = (fp - focus_ex) * p->perspective_weight;
+    focus_ex = result;
+
+    return result;
+
+
+}
+/************************************************************************************************************************/
+/* Main                                                                                                                 */
+/************************************************************************************************************************/
 int main() {
     /*----- variables -----*/
     queue<Rect> detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue;
@@ -375,16 +403,14 @@ int main() {
     player.initial_setup(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
     player.show_initial_setups(&player);
 
-    /*
+    
     while (true) {
         cap >> player_focus;
         player.detect_Eyes(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
-
-        double pw = player.get_perspective_weight();
-        Point fp = player.get_focus_point();
+        Point fp = player.calulate_focus(&player);
 
         // 초점 및 가중치 표현
-        circle(player_focus, fp, 3, Scalar(0, 0, 255), -1, LINE_AA);
+        circle(player_focus, fp, 3, CURSOR_COLOR, -1, LINE_AA);
         String norm_val = to_string(player.get_perspective_weight());
         putText(player_focus, norm_val, Point(10, 30), 2, 1, Scalar(0, 0, 255));
 
@@ -394,5 +420,5 @@ int main() {
     }
 
     destroyAllWindows();
-    */
+
 }
