@@ -407,7 +407,8 @@ int main() {
     while (true) {
         cap >> player_focus;
         player.detect_Eyes(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
-        Point fp = player.calulate_focus(&player);
+        //Point fp = player.calulate_focus(&player);
+        Point fp = player.get_focus_point();
 
         // 초점 및 가중치 표현
         circle(player_focus, fp, 3, CURSOR_COLOR, -1, LINE_AA);
