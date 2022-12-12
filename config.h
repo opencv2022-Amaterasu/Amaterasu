@@ -1,7 +1,6 @@
 #ifndef __CONFIGURATION_H__
 #define __CONFIGURATION_H__
 #include <opencv2/opencv.hpp>
-
 //------ FOR MJ ------//
 #ifdef _WIN32
 #include <Windows.h>
@@ -47,7 +46,7 @@
 
 /*------  COLOR ------*/
 #define EYE_COLOR cv::Scalar(0,0,255)
-#define CURSOR_COLOR cv::Scalar(0, 0,255)
+#define CURSOR_COLOR cv::Scalar(255, 0 ,255)
 
 /*------  GAME ------*/
 #define GAME_IMG_FILE "GAME_IMAGE.jpg"
@@ -60,12 +59,14 @@ std::string INIT_TEXT = "Keep watching Display Corners";
 cv::Point ANSWER_POINT1(685, 275);
 cv::Point ANSWER_POINT2(715, 335);
 cv::Rect ANSWER(ANSWER_POINT1, ANSWER_POINT2);
+cv::Mat BOARD(cv::Size(DEFAULT_WIDTH, DEFAULT_HEIGHT), CV_8UC3, cv::Scalar(200,200,200));
+cv::Point CENTER_POINT(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2);
 
 class SYS_INITIALIZING {
 public:
 	int open_cascade();
 	int open_camera();
-	void lamping_time();
+	void lamping_time(cv::Mat& FRAME);
 	int initialzing();
 
 };
@@ -84,6 +85,9 @@ private:
 	std::vector<cv::Rect> INITIAL_RIGHT_EYES; 			// (TL, TR, BR, BL) * 2
 	cv::Point focus_point;
 	double perspective_weight;
+	double min_perspective_weight = 9999.f;
+	double max_perspective_weight = 0.f;
+
 public:
 	/* Getter & Setter functions */
 	void set_focus_point(cv::Point focus) { this->focus_point = focus; }
@@ -112,7 +116,10 @@ public:
 	void detect_Eyes(cv::Mat& PLAYER_FOCUS, cv::Mat& GAME_FRAME, cv::Point* EYES_COORDINATE, std::queue<cv::Rect>& DETECTED_FACES_QUEUE, std::queue<cv::Rect>& DETECTED_LEFT_EYE_QUEUE, std::queue<cv::Rect>& DETECTED_RIGHT_EYE_QUEUE);
 
 	void initial_setup(cv::Mat& PLAYER_FOCUS, cv::Mat& GAME_FRAME, cv::Point* EYES_COORDINATE, std::queue<cv::Rect>& DETECTED_FACES_QUEUE, std::queue<cv::Rect>& DETECTED_LEFT_EYE_QUEUE, std::queue<cv::Rect>& DETECTED_RIGHT_EYE_QUEUE);
+	
+	void show_initial_setups(PLAYER* p);
 
+	cv::Point calulate_focus(PLAYER* p);
 };
 
 
