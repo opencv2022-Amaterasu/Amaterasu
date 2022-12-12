@@ -53,8 +53,8 @@ T get_most_frequent_value(T* buffer) {
     for (j = 0; j < INITIALIZATION_FRAME_NUM; j++) {
         if (vals[j] > freqeuncy) {
             freqeuncy = vals[j];
+            result = keys[j];
         }
-        result = keys[j];
     }
 
     return result;
@@ -89,10 +89,10 @@ int SYS_INITIALIZING::open_camera() {
     return 1;
 }
 
-void SYS_INITIALIZING::lamping_time() {
+void SYS_INITIALIZING::lamping_time(cv::Mat& FRAME) {
 
     for (int i = 0; i < LAMPING_TIME; i++) {
-        cap >> player_focus;
+        cap >> FRAME;
     }
     cout << "Lamping TIME " << endl << BORDER_LINE << endl;
 }
@@ -179,7 +179,7 @@ void PLAYER::detect_Eyes(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORDIN
 
     // Detected FACE
     rectangle(PLAYER_FOCUS, face_ROI, EYE_COLOR, 2, LINE_AA);
-    
+
     /*----- SPLIT BOTH EYES ROI -----*/
     face_ROI_coordinate = Point(face_ROI.x, face_ROI.y);
     face_width = cvRound(face_ROI.width);
@@ -255,7 +255,7 @@ void PLAYER::detect_Eyes(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORDIN
             right_eye_errorCount = 0;
         }
     }
- 
+
     left_eye_coordinate = Point((left_eye_rect.x + (left_eye_rect.width / 2)),
         (left_eye_rect.y + (left_eye_rect.height / 2)));
     right_eye_coordinate = Point((right_eye_rect.x + (right_eye_rect.width / 2)),
@@ -279,6 +279,31 @@ void PLAYER::detect_Eyes(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORDIN
     this->set_perspective_weight(norm(Point(right_eye_x, right_eye_y) - Point(left_eye_x, left_eye_y)));
 }
 
+void PLAYER::show_initial_setups(PLAYER* p) {
+    // 초기 설정 값 출력 
+    cout << endl << BORDER_LINE << "[ INITIAL STATES ]" << endl;
+    cout << "Focus Points : ";
+    for (int i = 0; i < 8; i++) {
+        cout << p->get_initial_focus_points()[i] << "\t";
+    }
+    cout << endl << endl << "Perspective Weights : ";
+    for (int i = 0; i < 8; i++) {
+        cout << p->get_initial_perspective_weights()[i] << "\t";
+    }
+    cout << endl << endl << "Faces : ";
+    for (int i = 0; i < 8; i++) {
+        cout << p->get_initial_faces()[i] << "\t";
+    }
+    cout << endl << endl << "Left Eyes : ";
+    for (int i = 0; i < 8; i++) {
+        cout << p->get_initial_left_eyes()[i] << "\t";
+    }
+    cout << endl << endl << "Right Eyes : ";
+    for (int i = 0; i < 8; i++) {
+        cout << p->get_initial_right_eyes()[i] << "\t";
+    }
+}
+
 void PLAYER::initial_setup(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORDINATE, queue<Rect>& DETECTED_FACES_QUEUE, queue<Rect>& DETECTED_LEFT_EYE_QUEUE, queue<Rect>& DETECTED_RIGHT_EYE_QUEUE) {
     /* VARIABLES */
     Point DISPLAY_TOP_LEFT(0, 0), DISPLAY_TOP_RIGHT(DEFAULT_WIDTH - 1, 0), DISPLAY_BOTTON_RIGHT(DEFAULT_WIDTH - 1, DEFAULT_HEIGHT - 1), DISPLAY_BOTTOM_LEFT(0, DEFAULT_HEIGHT - 1);
@@ -293,30 +318,32 @@ void PLAYER::initial_setup(Mat& PLAYER_FOCUS, Mat& GAME_FRAME, Point* EYES_COORD
         for (Point corner : DISPLAY_CORNERS) {    // 4 코너
             // TODO: 추후 PLAYER_FOCUS가 아닌 GAME_FRAME으로 변경 필요
 
-            for (int f = 0; f < INITIALIZATION_FRAME_NUM; f++) {        // INITIALIZATION_FRAME_NUM: 30 프레임 계산
+            int buf_size = 0;
+            while(buf_size < INITIALIZATION_FRAME_NUM) {        // INITIALIZATION_FRAME_NUM: 30 프레임 계산
+                cout << "STEP" << buf_size + 1 << endl;
                 cap >> PLAYER_FOCUS;
                 // 동공 검출 과정
-                cout << "QUEUE size: " << endl;
-                cout << "FACE QUEUE: " << DETECTED_FACES_QUEUE.size() << endl;
-                cout << "DETECTED LEFT QUEUE: " << DETECTED_LEFT_EYE_QUEUE.size() << endl;
-                cout << "DETECTED RIGHT QUEUE: " << DETECTED_RIGHT_EYE_QUEUE.size() << endl;
 
                 this->detect_Eyes(PLAYER_FOCUS, GAME_FRAME, EYES_COORDINATE, DETECTED_FACES_QUEUE, DETECTED_LEFT_EYE_QUEUE, DETECTED_RIGHT_EYE_QUEUE);
-                // 검출 결과 버퍼 저장
-                face_buf[f] = DETECTED_FACES_QUEUE.back();
-                cout << "face detected." << endl;
-                left_eye_buf[f] = DETECTED_LEFT_EYE_QUEUE.back();
-                cout << "left eye detected." << endl;
-                right_eye_buf[f] = DETECTED_RIGHT_EYE_QUEUE.back();
-                cout << "right eye detected." << endl;
-                focus_point_buf[f] = this->get_focus_point();
-                cout << "point buff made." << endl;
-                perspective_weight_buf[f] = this->get_perspective_weight();
-                // TODO: 추후 게임 화면에서 표시할 경우 수정 및 삭제 필요
-                putText(PLAYER_FOCUS, INIT_TEXT, Point(10, 30), 2, 1, Scalar(0, 0, 255));
-                circle(PLAYER_FOCUS, corner, 20, Scalar(0, 0, 255), -1, LINE_AA);
-                imshow("Player", PLAYER_FOCUS);
-                waitKey(10);
+                
+                if (DETECTED_LEFT_EYE_QUEUE.size() != 0 && DETECTED_RIGHT_EYE_QUEUE.size() != 0) {
+                    // 검출 결과 버퍼 저장
+                    face_buf[buf_size] = DETECTED_FACES_QUEUE.back();
+                    cout << "face detected." << endl;
+                    left_eye_buf[buf_size] = DETECTED_LEFT_EYE_QUEUE.back();
+                    cout << "left eye detected." << endl;
+                    right_eye_buf[buf_size] = DETECTED_RIGHT_EYE_QUEUE.back();
+                    cout << "right eye detected." << endl;
+                    focus_point_buf[buf_size] = this->get_focus_point();
+                    cout << "point buff made." << endl;
+                    perspective_weight_buf[buf_size] = this->get_perspective_weight();
+                    buf_size++;
+                    // TODO: 추후 게임 화면에서 표시할 경우 수정 및 삭제 필요
+                    putText(PLAYER_FOCUS, INIT_TEXT, Point(10, 30), 2, 1, Scalar(0, 0, 255));
+                    circle(PLAYER_FOCUS, corner, 20, Scalar(0, 0, 255), -1, LINE_AA);
+                    imshow("Player", PLAYER_FOCUS);
+                    waitKey(10);
+                }
             }
 
             // 버퍼 결과로부터 빈도수 최상위 값 계산 및 저장
@@ -339,12 +366,16 @@ int main() {
     initializer.initialzing();
     if (!initializer.open_cascade()) { exit(1); }
     if (!initializer.open_camera()) { exit(1); }
-    initializer.lamping_time();
+    initializer.lamping_time(player_focus);
 
     GAME game;
     game.GAME_INIT();
 
     PLAYER player;
+    player.initial_setup(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
+    player.show_initial_setups(&player);
+
+    /*
     while (true) {
         cap >> player_focus;
         player.detect_Eyes(player_focus, game_frame, eyes_coordinate, detected_faces_queue, detected_left_eye_queue, detected_right_eye_queue);
@@ -363,5 +394,5 @@ int main() {
     }
 
     destroyAllWindows();
-
-}   
+    */
+}
