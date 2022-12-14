@@ -27,7 +27,6 @@ void GAME::GAME_INIT() {
     answer_pt2 = Point(cvRound(game_size.width * 0.625), cvRound(game_size.height * 0.405));
     if (game_frame.empty()) { cout << "Game image loading Error occured." << endl; return; }
     ANSWER = Rect(answer_pt1, answer_pt2);
-    rectangle(game_frame, ANSWER, GAME_ANSWER_ZONE, 3, LINE_AA);
 }
 
 bool GAME::GAME_PLAY(Point& CURSOR, int GESTURE_CODE) {
@@ -58,7 +57,7 @@ bool GAME::GAME_PLAY(Point& CURSOR, int GESTURE_CODE) {
         CURSOR.y <= answer_pt2.y && CURSOR.y >= answer_pt1.y) {
 
         while (true) {
-            putText(game_end, end_command,  Point(game_end.cols/4, game_end.rows/2), FONT_HERSHEY_COMPLEX, 0.6, FONT_COLOR);
+            putText(game_end, end_command, Point(game_end.cols / 4, game_end.rows / 2), FONT_HERSHEY_COMPLEX, 0.6, FONT_COLOR);
             imshow(GAME_END, game_end);
             if (waitKey(10) == 27) { break; }
         }
