@@ -1,7 +1,7 @@
 #ifndef __CONFIGURATION_H__
 #define __CONFIGURATION_H__
 
-/*------ for MJ ------- */
+/*------ for WINDOW ------- */
 #ifdef _WIN32
 #include <Windows.h>
 /*------ CAMERA_SETTINGS ------- */
@@ -15,7 +15,7 @@
 #endif
 
 /*
-//------ for JW ------- //
+//------ for APPLE ------- //
 #ifdef __APPLE__    
 #include <unistd.h>
 //------ CAMERA_SETTINGS ------- //
